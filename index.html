@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diego & Sony | Álbum</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f7f4ee; color: #302a24; font: 15px 'DM Sans', sans-serif; }
+    a { color: inherit; }
+    button { color: inherit; cursor: pointer; font: inherit; }
+    :focus-visible { outline: 3px solid #c27c51; outline-offset: 4px; }
+    header, main, footer { width: min(1340px, 92%); margin-inline: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dcd4c8; padding: 19px 0; }
+    .brand { font: 28px 'Instrument Serif', Georgia, serif; text-decoration: none; }
+    .intro { text-align: center; padding: 24px 0; }
+    h1, h2 { font: 400 clamp(56px, 9vw, 112px)/.95 'Instrument Serif', Georgia, serif; margin: 0; }
+    h1 em { color: #87624a; }
+    .intro p { margin: 14px 0 0; }
+    .cards { display: flex; gap: 12px; height: clamp(360px, 59svh, 650px); overflow-x: auto; }
+    .card { position: relative; flex: 1; min-width: 140px; overflow: hidden; border-radius: 10px; isolation: isolate; color: white; background: #54463a; transition: flex .4s ease; }
+    .card.active { flex: 2.6; }
+    .card img, .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card img { position: absolute; inset: 0; z-index: -2; }
+    .card::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(transparent 32%, #201711e8); pointer-events: none; }
+    .select { position: absolute; inset: 0; border: 0; background: transparent; border-radius: inherit; }
+    .select:focus-visible { outline-offset: -5px; }
+    .caption { position: absolute; inset: auto 20px 22px; pointer-events: none; }
+    .caption h2 { font-size: clamp(27px, 4vw, 52px); line-height: 1; }
+    .enter { display: none; position: relative; pointer-events: auto; width: fit-content; margin-top: 14px; padding: 8px 14px; text-decoration: none; border: 1px solid #fff9; border-radius: 30px; }
+    .active .enter { display: block; }
+    .enter:hover { background: white; color: #302a24; }
+    footer { padding: 20px 0; color: #67584d; font-size: 13px; }
+    .back { display: inline-block; margin-top: 20px; text-underline-offset: 4px; }
+    .mosaic { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: clamp(85px, 13vw, 170px); grid-auto-flow: dense; gap: 9px; }
+    .mosaic:empty, [role="status"]:empty { display: none; }
+    .tile { border: 0; padding: 0; overflow: hidden; border-radius: 5px; background: #e0d2c3; }
+    .tile img { transition: transform .25s ease; }
+    .tile:hover img { transform: scale(1.04); }
+    .tile:nth-child(6n + 1) { grid-area: span 2 / span 2; }
+    .tile:nth-child(6n + 2) { grid-area: span 2 / span 3; }
+    .tile:nth-child(6n + 4) { grid-row: span 2; }
+    dialog { padding: 0; border: 0; background: #171310; color: white; border-radius: 8px; max-width: 94vw; }
+    dialog::backdrop { background: #19130fee; }
+    dialog img { display: block; max-width: 94vw; max-height: 80svh; object-fit: contain; margin: auto; }
+    .controls { display: flex; align-items: center; justify-content: center; gap: 15px; padding: 8px 12px; }
+    .controls button { border: 1px solid #ffffff70; border-radius: 24px; background: transparent; padding: 6px 12px; }
+    @media (max-width: 680px) {
+      .cards { flex-direction: column; height: clamp(450px, 72svh, 650px); gap: 8px; overflow: auto; }
+      .card { min-height: 76px; }
+      .card.active { min-height: 190px; }
+      .caption { inset: auto 15px 13px; }
+      .mosaic { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 130px; }
+      .tile:nth-child(n) { grid-area: auto; }
+      .tile:nth-child(5n + 1) { grid-column: span 2; grid-row: span 2; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header><a class="brand" href="#">Diego & Sony</a><span>Álbum de casamento</span></header>
+  <main id="page"></main>
+  <footer>Preview · Fotos de demonstração</footer>
+  <dialog aria-label="Foto ampliada">
+    <img alt="">
+    <div class="controls">
+      <button id="previous" aria-label="Foto anterior">←</button>
+      <span id="counter" aria-live="polite"></span>
+      <button id="next" aria-label="Próxima foto">→</button>
+      <form method="dialog"><button>Fechar</button></form>
+    </div>
+  </dialog>
+  <script>
+    const connected = ['http:', 'https:'].includes(location.protocol);
+    let albums = [
+      { id: 'pre-wedding', title: 'Pré-wedding', photos: ['1519741497674-611481863552', '1511285560929-80b456fea0bc', '1529636798458-92182e662485'] },
+      { id: 'casamento', title: 'Casamento', photos: ['1519225421980-715cb0215aed', '1507504031003-b417219a0fde', '1465495976277-4387d4b0e4a6'] },
+      { id: 'pos-casamento', title: 'Ensaio pós-casamento', photos: ['1523438885200-e635ba2c371e', '1537633552985-df8429e8048b', '1516589178581-6cd7833ae3b2'] },
+      { id: 'ensaio-gravida', title: 'Ensaio grávida', photos: [] },
+    ];
+    const page = document.querySelector('#page');
+    const lightbox = document.querySelector('dialog');
+    let selected = 'casamento';
+    let currentAlbum;
+    let photoIndex = 0;
+    let renderVersion = 0;
+
+    function photoUrl(id, width) {
+      if (typeof id === 'object') return '/api/photo/' + encodeURIComponent(id.id);
+      return `https://images.unsplash.com/photo-${id}?auto=format&fit=max&w=${width}&q=82`;
+    }
+
+    function escapeHtml(value) {
+      const element = document.createElement('span');
+      element.textContent = value;
+      return element.innerHTML.replaceAll('"', '&quot;');
+    }
+
+    async function fetchAlbumData(path) {
+      const response = await fetch('/api/' + path);
+      if (!response.ok) throw new Error('Falha ao carregar o álbum');
+      return response.json();
+    }
+
+    async function loadDriveAlbums() {
+      page.textContent = 'Carregando álbuns…';
+      document.querySelector('footer').textContent = 'Fotos do Google Drive';
+      try {
+        const folders = await fetchAlbumData('albums');
+        albums = folders.map((folder) => ({ ...folder, title: folder.name, photos: [] }));
+        selected = albums.find((album) => album.title.toLowerCase() === 'casamento')?.id ?? albums[0]?.id;
+        render();
+      } catch {
+        page.textContent = 'Não foi possível carregar os álbuns. Verifique a configuração do servidor.';
+      }
+    }
+
+    function selectAlbum(id) {
+      selected = id;
+      page.querySelectorAll('.card').forEach((card) => {
+        const active = card.dataset.album === id;
+        card.classList.toggle('active', active);
+        card.querySelector('button').setAttribute('aria-pressed', active);
+      });
+    }
+
+    function showPhoto(index) {
+      const { photos, title } = currentAlbum;
+      photoIndex = (index + photos.length) % photos.length;
+      const image = lightbox.querySelector('img');
+      image.src = photoUrl(photos[photoIndex], 1600);
+      image.alt = `Foto ${photoIndex + 1} de demonstração, ${title}`;
+      document.querySelector('#counter').textContent = `${photoIndex + 1} / ${photos.length}`;
+    }
+
+    async function render() {
+      const version = ++renderVersion;
+      if (lightbox.open) lightbox.close();
+      currentAlbum = albums.find((album) => `#${album.id}` === location.hash);
+      if (currentAlbum) {
+        const album = currentAlbum;
+        const title = escapeHtml(album.title);
+        page.innerHTML = `<a class="back" href="#">← Voltar aos álbuns</a>
+          <section class="intro"><h1>${title}</h1></section>
+          <div class="mosaic" aria-label="Fotos de ${title}"></div><p role="status"></p>`;
+        const status = page.querySelector('[role="status"]');
+        if (connected) {
+          status.textContent = 'Carregando fotos…';
+          try {
+            album.photos = await fetchAlbumData('albums/' + encodeURIComponent(album.id));
+          } catch {
+            if (version === renderVersion) status.textContent = 'Não foi possível carregar as fotos deste álbum.';
+            return;
+          }
+        }
+        if (version !== renderVersion) return;
+        status.textContent = album.photos.length ? '' : 'Este álbum ainda não tem fotos disponíveis.';
+        page.querySelector('.mosaic').innerHTML = album.photos.map((id, index) =>
+          `<button class="tile" data-photo="${index}" aria-label="Ampliar foto ${index + 1}"><img src="${escapeHtml(photoUrl(id, 800))}" alt="" loading="lazy"></button>`).join('');
+      } else {
+        page.innerHTML = `<section class="intro"><h1>Diego <em>&</em> Sony</h1><p>${albums.length ? 'Escolha um álbum para ver as fotos.' : 'Nenhuma pasta de álbum disponível.'}</p></section>
+          <div class="cards">${albums.map(({ id, title: name, photos, cover }) => {
+          const title = escapeHtml(name);
+          const image = cover ?? photos[0];
+          return `<article class="card" data-album="${escapeHtml(id)}">
+            ${image ? `<img src="${escapeHtml(photoUrl(image, 1280))}" alt="">` : ''}
+            <button class="select" type="button" aria-label="Selecionar ${title}"></button>
+            <div class="caption"><h2>${title}</h2><a class="enter" href="#${escapeHtml(id)}">Ver álbum →</a></div>
+          </article>`;
+        }).join('')}</div>`;
+        selectAlbum(selected);
+      }
+      document.title = currentAlbum ? `${currentAlbum.title} | Diego & Sony` : 'Diego & Sony | Álbum';
+    }
+
+    page.addEventListener('click', (event) => {
+      const card = event.target.closest('.select')?.closest('.card');
+      if (card) {
+        if (card.dataset.album === selected) location.hash = selected;
+        else selectAlbum(card.dataset.album);
+      }
+      const tile = event.target.closest('.tile');
+      if (tile) {
+        showPhoto(Number(tile.dataset.photo));
+        lightbox.showModal();
+      }
+    });
+    document.querySelector('#previous').onclick = () => showPhoto(photoIndex - 1);
+    document.querySelector('#next').onclick = () => showPhoto(photoIndex + 1);
+    lightbox.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') showPhoto(photoIndex - 1);
+      if (event.key === 'ArrowRight') showPhoto(photoIndex + 1);
+    });
+    window.addEventListener('hashchange', () => {
+      render();
+      window.scrollTo(0, 0);
+      const title = page.querySelector('h1');
+      title.tabIndex = -1;
+      title.focus({ preventScroll: true });
+    });
+    if (connected) loadDriveAlbums();
+    else render();
+  </script>
+</body>
+</html>

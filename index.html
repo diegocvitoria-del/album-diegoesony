@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Diego & Sony | Álbum</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Roboto:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; background: #f7f4ee; color: #302a24; font: 15px 'DM Sans', sans-serif; }
@@ -16,6 +16,8 @@
     .brand { font: 28px 'Instrument Serif', Georgia, serif; text-decoration: none; }
     .intro { text-align: center; padding: 24px 0; }
     h1, h2 { font: 400 clamp(56px, 9vw, 112px)/.95 'Instrument Serif', Georgia, serif; margin: 0; }
+    .caption, .album-title { font-family: Roboto, sans-serif; }
+    .caption h2 { font-family: inherit; }
     h1 em { color: #87624a; }
     .intro p { margin: 14px 0 0; }
     .cards { display: flex; gap: 12px; height: clamp(360px, 59svh, 650px); overflow-x: auto; }
@@ -142,7 +144,7 @@
         const album = currentAlbum;
         const title = escapeHtml(album.title);
         page.innerHTML = `<a class="back" href="#">← Voltar aos álbuns</a>
-          <section class="intro"><h1>${title}</h1></section>
+          <section class="intro"><h1 class="album-title">${title}</h1></section>
           <div class="mosaic" aria-label="Fotos de ${title}"></div><p role="status"></p>`;
         const status = page.querySelector('[role="status"]');
         if (connected) {
